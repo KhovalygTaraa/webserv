@@ -36,12 +36,12 @@ class Server {
 		~Server();
 		void start();
 	private:
+		typedef std::vector<Address> Listen;
 		void addSocket(int sock, short event);
 		void expandPoll();
 		std::vector<int>	_lsocket;
 		pollfd				*fds;
 		int 				fds_size;
-
 };
 
 #endif

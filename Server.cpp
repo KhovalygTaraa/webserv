@@ -17,25 +17,23 @@ Server::Server(char *config) {
 	int opt;
 	int sock;
 	struct sockaddr_in	inet;
-	this->fds_size = 0;
-	fds = new pollfd[2];
-	fds[0] = NULL;
-	fds[1] = NULL;
+	fds = NULL;
 
+	std::cout << "\e[1;97mRunning server...\e[0m" << std::endl;
 	Parser parser(config);
-	std::vector<Address> listen = parser.getListen();
+	Listen listen = parser.getListen();
 
 	std::cout << "\e[1;32m Listening -> \e[0m";
-	for (std::vector<Address>::iterator it = listen.begin(); it != listen.end(); it++) {
+	for (Listen::iterator it = listen.begin(); it != listen.end(); it++) {
 
 		sock = socket(PF_INET, SOCK_STREAM, 0));
 		if (sock == -1)
 			throw std::strerror(errno);
-		fcntl(sock, F_SETFL, O_NONBLOCK);
-		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+		fcntl(sock, F_SETFL, O_NONBLOCK); // от блокирования сокета.
+		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)); // от залипания tcp-порта.
 
 		inet.sin_family = PF_INET;
-		inet.sin_port = htons(*it->port);
+		inet.sin_port = htons(*it->port); // переводим значение порта в сетевой порядок следования байт
 		inet.sin_addr.s_addr = inet_addr(*it->ip.c_str());
 
 		base = reinterpret_cast<struct sockaddr *>(&inet);
@@ -50,7 +48,7 @@ Server::Server(char *config) {
 }
 
 Server::~Server() {
-
+	delete []fds;
 }
 
 void Server::start() {
@@ -106,6 +104,13 @@ void Server::expandPoll() {
 	pollfd	*tmp;
 	int 	i;
 
+	if (fds == NULL)
+	{
+		fds = new pollfd[2];
+		fds[0] = NULL;
+		fds[1] = NULL;
+		fds_size = 0;
+	}
 	fds_size += 100;
 	tmp = new pollfd[fds_size];
 	tmp[fds_size - 1] = NULL;
@@ -117,6 +122,6 @@ void Server::expandPoll() {
 	{
 		tmp[a].fd = -1;
 	}
-	delete fds[];
+	delete []fds;
 	fds = tmp;
 }
