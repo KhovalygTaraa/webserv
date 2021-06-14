@@ -27,18 +27,21 @@
 # include <sys/time.h> // kqueue - for non-blocking connection
 # include <sys/un.h>
 # include <sys/stat.h>
+# include <vector>
 # include "CParser.hpp"
 
 class Server {
 	public:
 		Server(char *config);
-//		~Server();
+		~Server();
 		void start();
-//	private:
-//		void addSocket(int sock, short event);
-//		int					_lsocket;
-//		pollfd				*fds;
-//		struct sockaddr_in	_base;
+	private:
+		void addSocket(int sock, short event);
+		void expandPoll();
+		std::vector<int>	_lsocket;
+		pollfd				*fds;
+		int 				fds_size;
+
 };
 
 #endif

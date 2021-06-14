@@ -12,6 +12,18 @@
 
 #include "CParser.hpp"
 
-Listen CParser::getListen() const {
-	return (listen);
+Parser::Parser(char *config) {
+	Address address;
+	Address address2;
+
+	address.ip = "0.0.0.0";
+	address2.ip = "0.0.0.0";
+	address.port = 2021;
+	address2.port = 1500;
+	this->listen.push_back(address);
+	this->listen.push_back(address2);
 }
+
+std::vector<Address> Parser::getListen(void) const {
+ 	return (this->listen);
+ }

@@ -15,20 +15,40 @@
 # include <iostream>
 # include <vector>
 # include <string>
-
+# include <map>
+//# include "webserv.hpp"
 /*
  *  config - это путь к конфиг-файлу, относительно нашей программы-сервера. Открываешь, считываешь и парсишь.
  */
 
-class CParser {
+struct Address {
+	int port;
+	std::string ip;
+};
+
+struct Location {
+	std::string methods;
+};
+
+struct ServerConf {
+	std::vector<Address> getAddress() const;
+	std::map<std::string, Location> getLocation() const;
+private:
+	std::vector<Address> address;
+	std::map<std::string, Location> location;
+};
+
+class Parser {
 	private:
-		CParser();
-		struct Listen { int port; nstd::string ip; }; // сюда парсишь port и ip.
-		std::vector<Listen> listen; // сюда нужно разложить все экземпляры структуры Listen. Дублирования не должно быть.
+		Parser();
+		std::vector<Address> listen; // уникальные   ip:host
+		std::vector<ServerConf> server;
+		 
 	public:
-		CParser(char *config); // если config == NULL, нужно расспарсить config file по-умолчанию.
-		~CParser(); // динамическую память нужно почистить, если она была выделена.
-		std::vector<Listen> getListen(void) const;
+		Parser(char *config); // если config == NULL, нужно расспарсить config file по-умолчанию.
+		~Parser(); // динамическую память нужно почистить, если она была выделена.
+		std::vector<Address> getListen(void) const;
+		std::vector<ServerConf> getServer() const;
 };
 
 #endif

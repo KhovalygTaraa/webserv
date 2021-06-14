@@ -40,6 +40,8 @@
 # include <sys/un.h>
 # include <sys/stat.h>
 //# include "gnl/get_next_line.h"
-//# include <pthread.h>
+# include <pthread.h>
+
+
 
 #endif
