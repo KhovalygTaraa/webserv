@@ -29,6 +29,7 @@
 # include <sys/stat.h>
 # include <vector>
 # include "CParser.hpp"
+# define BUFFER_SIZE 1500
 
 class Server {
 	public:
@@ -41,6 +42,7 @@ class Server {
 		void expandPoll();
 		std::vector<int>	_lsocket;
 		pollfd				*fds;
+		nfds_t 				nfds;
 		int 				fds_size;
 };
 

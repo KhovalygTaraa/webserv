@@ -10,23 +10,23 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-//#include "Server.hpp"
+#include "Server.hpp"
 //# include <iostream>
 
 int main(int argc, char **argv)
 {
 	
-//	try {
-//		//parser
-////		Server server(2021, "0.0.0.0", 5);
-////		server.start();
-//		Server server(argv[1]);
+	try {
+		//parser
+//		Server server(2021, "0.0.0.0", 5);
 //		server.start();
-//	}
-//	catch (const char *e) {
-//		std::cout << "\e[0;31m[FAIL]\e[0m" << std::endl;
-//		std::cout << "\e[1;31mError: \e[0m" << e << std::endl;
-//	}
+		Server server(argv[1]);
+		server.start();
+	}
+	catch (const char *e) {
+		std::cout << "\e[0;31m[FAIL]\e[0m" << std::endl;
+		std::cout << "\e[1;31mError: \e[0m" << e << std::endl;
+	}
 
 	return (0);
 }

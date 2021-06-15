@@ -24,6 +24,14 @@ Parser::Parser(char *config) {
 	this->listen.push_back(address2);
 }
 
+Parser::~Parser() {
+
+}
+
 std::vector<Address> Parser::getListen(void) const {
  	return (this->listen);
  }
+
+ std::vector<ServerConf> Parser::getServer() const {
+	return (this->server);
+}

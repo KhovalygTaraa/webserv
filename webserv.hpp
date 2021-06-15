@@ -27,7 +27,7 @@
 // socket - create socket
 // bind - attach to socket ip-address, port, and address family (семейство адресов).
 // connect - send request to connection.
-// setsockopt - time to wait receive
+// setsockopt - time to wait receive, tcp-port
 // getsockname
 // listen - open socket to listening
 // accept - wait request from client, open connection if request received.
