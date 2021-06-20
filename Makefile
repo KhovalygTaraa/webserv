@@ -10,7 +10,7 @@
 #                                                                              #
 # **************************************************************************** #
 
-NAME		=	wserver
+NAME		=	server
 
 PARSER		=	CParser.cpp RequestParser.cpp CParser.hpp RequestParser.hpp
 CORE		=	Server.cpp Server.hpp
@@ -26,17 +26,27 @@ FILES		=	$(addprefix $(PARSERRDIR), $(PARSER)) \
 				$(addprefix $(COREDIR), $(CORE)) \
 				$(addprefix $(RESPONSEDIR), $(RESPONSE))
 
+OBJS_TMP	=	$(notdir $(patsubst %.cpp,%.o,$(CPP)))
+
 CPP			=	$(filter %.cpp, $(FILES)) $(MAIN)
-OBJS		=	$(patsubst %.cpp,%.o,$(CPP)) # another way $($(CPP):.cpp=.o)
 HPP			=	$(addprefix -I , $(filter %.hpp, $(FILES)))
-$(warning $(OBJS))
+OBJ			=	$(addprefix $(OBJDIR), $(OBJS_TMP))
 
 
-all:
-	clang++ -Wall -Wextra -Werror $(CPP) $(HPP) -o $(NAME)
+all: $(NAME)
+
+$(OBJS): $(CPP)
+	mkdir $(OBJDIR)
+	clang++	-Wall -Wextra -Werror -c $(CPP) $(HPP)
+	mv $(OBJS) $(OBJDIR)
+
+$(NAME): $(OBJ)
+	clang++ -Wall -Wextra -Werror -o $@
 
 clean:
+	rm -rf $(OBJDIR)
 
 fclean: clean
+	rm $(NAME)
 
 re: fclean all
