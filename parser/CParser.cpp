@@ -13,6 +13,7 @@
 #include "CParser.hpp"
 
 Parser::Parser(char *config) {
+	(void)config;
 	Address address;
 	Address address2;
 	Address address3;

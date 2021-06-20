@@ -10,18 +10,24 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Server.hpp"
-//# include <iostream>
+#include "core/Server.hpp"
+
 
 int main(int argc, char **argv)
 {
+	if (argc > 2)
+	{
+		std::cout << "too many arguments6 max is 1" << std::endl;
+		return (1);
+	}
 	try {
 		Server server(argv[1]);
 		server.start();
 
 	}
 	catch (const char *e) {
-		std::cout << "\e[0;31m[FAIL]\e[0m" << std::endl;
+		std::cout << paintString("[FAIL]", BOLD, RED, 0);
+//		std::cout << "\e[0;31m[FAIL]\e[0m" << std::endl;
 		std::cout << "\e[1;31mError: \e[0m" << e << std::endl;
 	}
 	catch (std::exception &e)

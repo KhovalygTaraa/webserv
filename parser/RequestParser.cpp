@@ -1,27 +1,27 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   EventManager.hpp                                   :+:      :+:    :+:   */
+/*   RequestParser.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: swquinc <swquinc@student.21-school.ru>     +#+  +:+       +#+        */
+/*   By: swquinc <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/06/15 22:52:19 by swquinc           #+#    #+#             */
-/*   Updated: 2021/06/15 22:52:45 by swquinc          ###   ########.fr       */
+/*   Created: 2021/06/19 16:43:18 by swquinc           #+#    #+#             */
+/*   Updated: 2021/06/19 16:43:20 by swquinc          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef EVENTMANAGER_HPP
-# define EVENTMANAGER_HPP
+#include "RequestParser.hpp"
 
-class EventManager{
-	public:
-		EventManager();
-		methodGet();
-		methodPost(); //
-		methodDelete(); //
-	private:
+RequestParser::RequestParser(const char *request) {
+	(void)request;
 
-};
+	this->method = "GET";
+}
 
-#endif
+RequestParser::~RequestParser() {
 
+}
+
+std::string RequestParser::getMethod() const {
+	return (this->method);
+}

@@ -12,55 +12,63 @@
 
 #include "Server.hpp"
 
-Server::Server(char *config): configParser(config) {
-	fds = new pollfd[1];
-	fds[0].fd = -2;
-	fds_size = 0;
+Server::Server(char *config): _configParser(config) {
+	_fds = new pollfd[1];
+	_fds[0].fd = -2;
+	_fds_size = 0;
+	_nfds = 0;
 }
 
 Server::~Server() {
-	delete []fds;
+	delete []_fds;
 }
 
 void Server::start() {
-	int					event;
-	std::string			response;
-	const char		 	*request;
-	ResponseMaker		responseMaker;
+	int	events;
 
-	std::cout << "\e[1;97mRunning server...\e[0m" << std::endl;
-	startListen(configParser.getListen());
+	std::cout << paintString("\n[Running server]", BOLD, BWHITE, 0) << std::endl;
+	std::cout << paintString(" Parsing   -> [OK]", BOLD, GREEN, 0) << std::endl;
 
-	std::cout << "\e[1;32m Polling   -> \e[0m" << std::endl;
-	while(1) {
-		event = poll(fds, nfds + 1, -1); // поменять 3 аргумент на 0, для неблокируемого опроса
-		if (event == -1)
+	startListen(_configParser.getListen());
+
+	std::cout << paintString("[Success]", BOLD, BWHITE, 0) << '\n' <<std::endl;
+	std::cout << paintString("[Waiting to events]", BOLD, BWHITE, 0) << std::endl;
+
+	while(true) {
+		events = poll(_fds, _nfds + 1, 0);
+		if (events == -1)
 			throw std::strerror(errno);
-		else if (event == 0)
-			throw "poll timeout"; // поменять на continue для неблокируемого опроса.
-		for(int i = 0; (fds[i].fd != -2); i++)
-		{
-			if (fds[i].revents == POLLRDNORM)
-				acceptConnection(fds[i], i);
-			else if (fds[i].revents == (POLLIN | POLLOUT))
-			{
-				request = getRequest(fds[i].fd);
-				response = responseMaker.makeResponse(request);
-				delete request;
-				if (send(fds[i].fd, response.c_str(), response.length(), 0) < 0)
-					throw "over";
-			}
-			else if (fds[i].revents >= POLLHUP && fds[i].revents <= 17)
-				deleteSocket(fds[i]);
-			else if (fds[i].revents == POLLERR)
-				throw "POLLERR detected!";
-			else if (fds[i].revents == POLLNVAL)
-				throw "Файловый дескриптор не открыт";
-			else
-			{
-				if (fds[i].revents != 0 && fds[i].revents != 4)
-					std::cout << fds[i].revents << std::endl;
-			}
+		else if (events == 0)
+			continue ;
+		findEvent(events);
+	}
+}
+
+void Server::findEvent(int events) {
+	std::string		response;
+	const char		*request;
+	ResponseMaker	responseMaker;
+
+	(void)events;
+	for (int i = 0; (_fds[i].fd != -2); i++) {
+		if (_fds[i].revents == NEW_CONNECTION)
+			acceptConnection(_fds[i], i);
+		else if (_fds[i].revents == REQUEST_RESPONSE) {
+			request = getRequest(_fds[i].fd);
+			response = responseMaker.makeResponse(request);
+			delete request;
+			if (send(_fds[i].fd, response.c_str(), response.length(), 0) < 0)
+				throw "over";
+		}
+		else if (_fds[i].revents >= POLLHUP && _fds[i].revents <= 17)
+			deleteSocket(_fds[i]);
+		else if (_fds[i].revents == POLLERR)
+			throw "POLLERR detected!";
+		else if (_fds[i].revents == POLLNVAL)
+			throw "Файловый дескриптор не открыт";
+		else {
+			if (_fds[i].revents != 0 && _fds[i].revents != 4)
+				std::cout << _fds[i].revents << std::endl;
 		}
 	}
 }
@@ -69,10 +77,10 @@ void Server::startListen(Listen listen) {
 	int					opt;
 	int					sock;
 	struct sockaddr		*base;
-	struct sockaddr_in	inet;
+	struct sockaddr_in	inet = {};
 
 	opt = 1;
-	std::cout << "\e[1;32m Listening -> \e[0m";
+	std::cout << paintString(" Listening -> ", BOLD, GREEN, 0);
 	for (Listen::iterator it = listen.begin(); it != listen.end(); it++) {
 		sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP); // Семейств сокета, тип потокового взаимодействия(тип передачи данных), протокол.
 		if (sock == -1)
@@ -89,19 +97,19 @@ void Server::startListen(Listen listen) {
 			throw std::strerror(errno);
 		if (::listen(sock, 5) == -1)
 			throw std::strerror(errno);
-		addSocket(sock, POLLRDNORM);
+		addSocket(sock, NEW_CONNECTION);
 	}
-	std::cout << "\e[1;32m[OK]\e[0m" << std::endl;
+	std::cout << "\033[1;32m[OK]\033[0m" << std::endl;
 }
 
 const char 	*Server::getRequest(int fd) {
-	char				buffer[BUFFER_SIZE];
-	int 				size;
-	char 				*data;
-	char 				*tmp;
+	char		buffer[BUFFER_SIZE];
+	int 		size;
+	const char 	*data;
+	const char 	*tmp;
 
-	data = NULL;
-	while(1) {
+	data = nullptr;
+	while(true) {
 		size = recv(fd, &buffer, BUFFER_SIZE, 0);
 		if (size > 0) {
 			buffer[size] = '\0';
@@ -119,8 +127,7 @@ void Server::acceptConnection(pollfd lsocket, int i) {
 	int					new_client;
 	socklen_t			len;
 	struct sockaddr		*base;
-	struct sockaddr_in	inet;
-//	std::pair<std::map<int, in_addr_t>::iterator, bool> ret;
+	struct sockaddr_in	inet = {};
 
 	lsocket.revents = 0;
 	base = reinterpret_cast<struct sockaddr *>(&inet);
@@ -132,28 +139,29 @@ void Server::acceptConnection(pollfd lsocket, int i) {
 	if (fcntl(new_client, F_SETFL, O_NONBLOCK) < 0)
 		throw std::strerror(errno);
 
-	std::cout << "==================" << std::endl;
-	std::cout	<< "\e[1;32m[NEW_CLIENT]\e[0m"
+	std::cout   << paintString("================================", 0, BWHITE, 0) << std::endl;
+	std::cout	<< paintString("[NEW_CLIENT]", 1, GREEN, 0)
 				<< "\nConnected to " << lsocket.fd << " listening socket"
 				<< "\nfd		 = " << new_client << "(" << i << ")"
 				<< "\nport		 = " << inet.sin_port
 				<< "\nip		 = " << inet.sin_addr.s_addr
 				<< "\nIPv4		 = " << inet_ntoa(inet.sin_addr)
 				<< std::endl;
-	addSocket(new_client, (POLLIN | POLLOUT));
+	std::cout   << paintString("================================", 0, BWHITE, 0) << std::endl;
+	addSocket(new_client, REQUEST_RESPONSE);
 }
 
 void Server::addSocket(int sock, short event) {
 	int i;
 
-	nfds = sock;
-	for(i = 0; fds[i].fd != -2; i++)
+	_nfds = sock;
+	for(i = 0; _fds[i].fd != -2; i++)
 	{
-		if (fds[i].fd == -1)
+		if (_fds[i].fd == -1)
 		{
-			fds[i].fd = sock;
-			fds[i].events = event;
-			fds[i].revents = 0;
+			_fds[i].fd = sock;
+			_fds[i].events = event;
+			_fds[i].revents = 0;
 			return ;
 		}
 	}
@@ -162,7 +170,7 @@ void Server::addSocket(int sock, short event) {
 }
 
 void Server::deleteSocket(pollfd &socket) {
-	std::cout << "\e[0;93mКлиент " <<  socket.fd  << " разорвал соединение!\e[0m" << std::endl;
+	std::cout << "\033[0;93mКлиент " <<  socket.fd  << " разорвал соединение!\033[0m" << std::endl;
 	close(socket.fd);
 	socket.fd = -1;
 	socket.events = 0;
@@ -174,26 +182,26 @@ void Server::expandPoll() {
 	pollfd	*tmp2;
 	int 	i;
 
-	fds_size += 100;
-	tmp = new pollfd[fds_size];
-	tmp[fds_size - 1].fd = -2;
-	for(i = 0; fds[i].fd != -2; i++)
+	_fds_size += 100;
+	tmp = new pollfd[_fds_size];
+	tmp[_fds_size - 1].fd = -2;
+	for(i = 0; _fds[i].fd != -2; i++)
 	{
-		tmp[i].fd = fds[i].fd;
-		tmp[i].events = fds[i].events;
+		tmp[i].fd = _fds[i].fd;
+		tmp[i].events = _fds[i].events;
 	}
 	for(int a = i; tmp[a].fd != -2; a++)
 	{
 		tmp[a].fd = -1;
 	}
-	tmp2 = fds;
-	fds = tmp;
+	tmp2 = _fds;
+	_fds = tmp;
 	delete []tmp2;
 }
 
-char* Server::strjoin(const char *s1, const char *s2) {
-	int 	i;
-	int 	i2;
+const char* Server::strjoin(const char *s1, const char *s2) const{
+	size_t 	i;
+	size_t 	i2;
 	char 	*res;
 
 	if (!s1) {
@@ -208,4 +216,23 @@ char* Server::strjoin(const char *s1, const char *s2) {
 	strcat(res, s2);
 	res[i + i2] = '\0';
 	return (res);
+}
+
+std::string paintString(const std::string &string, int format, int color, int background)
+{
+	std::stringstream res;
+
+	if (format <= 0)
+		format = 10;
+	if (color <= 0)
+		color = 39;
+	background = background + 10;
+	if (background <= 10)
+		background = 49;
+	res << "\033["
+		<< std::to_string(format)	  << ';'
+		<< std::to_string(color) 	  << ';'
+		<< std::to_string(background) << 'm'
+		<< string << "\033[0m";
+	return (res.str());
 }

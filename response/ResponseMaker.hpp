@@ -15,10 +15,12 @@
 # include <iostream>
 # include <string>
 # include <sstream>
+# include "../parser/RequestParser.hpp"
 
 class ResponseMaker{
 	private:
-
+		std::string get(RequestParser &parser);
+		std::string post(RequestParser &parser);
 	public:
 		ResponseMaker();
 		~ResponseMaker();

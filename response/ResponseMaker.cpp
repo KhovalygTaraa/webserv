@@ -21,15 +21,30 @@ ResponseMaker::~ResponseMaker() {
 }
 
 std::string ResponseMaker::makeResponse(const char *request) {
+
+	RequestParser		parser(request);
+	std::string 		method;
+	std::string 		response;
+
+	method = parser.getMethod();
+	if (method == "GET")
+		response = get(parser);
+	else if (method == "POST")
+		response = post(parser);
+//	std::cout << request << std::endl;
+	return (response);
+}
+
+std::string ResponseMaker::get(RequestParser &parser) {
 	std::stringstream	content;
 	std::stringstream	response;
 
-
+	(void)parser;
 	content << "<title>Test C++ HTTP Server</title>\n"
 			<< "<h1>Test page</h1>\n"
 			<< "<p>This is body of the test page...</p>\n"
 			<< "<h2>Request headers</h2>\n"
-			<< "<pre>" << request << "</pre>\n"
+			<< "<pre>" << "GET" << "</pre>\n"
 			<< "<em><small>Test C++ Http Server</small></em>\n";
 
 	// Формируем весь ответ вместе с заголовками
@@ -41,4 +56,10 @@ std::string ResponseMaker::makeResponse(const char *request) {
 			 << "\r\n\r\n"
 			 << content.str().c_str();
 	return (response.str());
+}
+
+std::string ResponseMaker::post(RequestParser &parser) {
+	std::string response;
+	(void)parser;
+	return (response);
 }

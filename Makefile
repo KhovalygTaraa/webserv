@@ -10,15 +10,33 @@
 #                                                                              #
 # **************************************************************************** #
 
-NAME = server
+NAME		=	wserver
 
-SRC = CParser.cpp webserv.cpp Server.cpp ResponseMaker.cpp
+PARSER		=	CParser.cpp RequestParser.cpp CParser.hpp RequestParser.hpp
+CORE		=	Server.cpp Server.hpp
+RESPONSE	=	ResponseMaker.cpp ResponseMaker.hpp
+MAIN		=	webserv.cpp
+
+PARSERRDIR	=	parser/
+COREDIR		=	core/
+RESPONSEDIR	=	response/
+OBJDIR		=	objs/
+
+FILES		=	$(addprefix $(PARSERRDIR), $(PARSER)) \
+				$(addprefix $(COREDIR), $(CORE)) \
+				$(addprefix $(RESPONSEDIR), $(RESPONSE))
+
+CPP			=	$(filter %.cpp, $(FILES)) $(MAIN)
+OBJS		=	$(patsubst %.cpp,%.o,$(CPP)) # another way $($(CPP):.cpp=.o)
+HPP			=	$(addprefix -I , $(filter %.hpp, $(FILES)))
+$(warning $(OBJS))
+
 
 all:
-	clang++ $(SRC) -o $(NAME)
+	clang++ -Wall -Wextra -Werror $(CPP) $(HPP) -o $(NAME)
 
 clean:
 
-fclean:
+fclean: clean
 
-re:
+re: fclean all
