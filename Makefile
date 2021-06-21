@@ -12,41 +12,44 @@
 
 NAME		=	server
 
-PARSER		=	CParser.cpp RequestParser.cpp CParser.hpp RequestParser.hpp
-CORE		=	Server.cpp Server.hpp
-RESPONSE	=	ResponseMaker.cpp ResponseMaker.hpp
-MAIN		=	webserv.cpp
+PARSER		= CParser.cpp RequestParser.cpp CParser.hpp RequestParser.hpp
+CORE		= Server.cpp Server.hpp
+RESPONSE	= ResponseMaker.cpp ResponseMaker.hpp
+MAIN		= webserv.cpp
 
-PARSERRDIR	=	parser/
-COREDIR		=	core/
-RESPONSEDIR	=	response/
-OBJDIR		=	objs/
+PARSERRDIR	= parser
+COREDIR		= core
+RESPONSEDIR	= response
+OBJDIR		= objs
+SRCSDIR		= srcs
 
-FILES		=	$(addprefix $(PARSERRDIR), $(PARSER)) \
-				$(addprefix $(COREDIR), $(CORE)) \
-				$(addprefix $(RESPONSEDIR), $(RESPONSE))
+FILES_TMP	= $(addprefix $(PARSERRDIR)/, $(PARSER)) \
+			  $(addprefix $(COREDIR)/, $(CORE)) \
+			  $(addprefix $(RESPONSEDIR)/, $(RESPONSE)) $(MAIN) \
 
-OBJS_TMP	=	$(notdir $(patsubst %.cpp,%.o,$(CPP)))
+FILES		= $(addprefix $(SRCSDIR)/, $(FILES_TMP))
 
-CPP			=	$(filter %.cpp, $(FILES)) $(MAIN)
-HPP			=	$(addprefix -I , $(filter %.hpp, $(FILES)))
-OBJ			=	$(addprefix $(OBJDIR), $(OBJS_TMP))
+CPP			= $(filter %.cpp,$(FILES))
+HPP			= $(addprefix -I , $(filter %.hpp, $(FILES)))
 
+OBJS		= $(addprefix $(OBJDIR)/, $(patsubst %.cpp,%.o,$(filter %.cpp,$(FILES_TMP))))
+OBJS_SUB	= $(addprefix $(OBJDIR)/, parser core response)
 
 all: $(NAME)
 
-$(OBJS): $(CPP)
-	mkdir $(OBJDIR)
-	clang++	-Wall -Wextra -Werror -c $(CPP) $(HPP)
-	mv $(OBJS) $(OBJDIR)
+$(NAME): $(OBJDIR) $(OBJS)
+	clang++ -Wall -Wextra -Werror $(HPP) $(OBJS) -o $@
 
-$(NAME): $(OBJ)
-	clang++ -Wall -Wextra -Werror -o $@
+$(OBJDIR):
+	mkdir -p $(OBJS_SUB)
+
+$(OBJDIR)/%.o: $(SRCSDIR)/%.cpp
+	clang++	-Wall -Wextra -Werror $(HPP) -c $< -o $@
 
 clean:
 	rm -rf $(OBJDIR)
 
 fclean: clean
-	rm $(NAME)
+	rm -f $(NAME)
 
 re: fclean all

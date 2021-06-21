@@ -19,6 +19,7 @@ Server::Server(char *config): _configParser(config) {
 	_nfds = 0;
 }
 
+
 Server::~Server() {
 	delete []_fds;
 }
