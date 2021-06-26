@@ -12,16 +12,25 @@
 
 #include "RequestParser.hpp"
 
-RequestParser::RequestParser(const char *request) {
-	(void)request;
+RequestParser::RequestParser() {
 
-	this->method = "GET";
+}
+
+RequestParser::RequestParser(Config &configParser): _config(configParser) {
 }
 
 RequestParser::~RequestParser() {
 
 }
 
-std::string RequestParser::getMethod() const {
-	return (this->method);
+bool	RequestParser::parseHeader() {
+	return (true);
+}
+
+std::string		RequestParser::getMethod() const {
+	return ("GET");
+}
+
+RequestParser&	RequestParser::operator=(const RequestParser &r) {
+	return (*this);
 }
