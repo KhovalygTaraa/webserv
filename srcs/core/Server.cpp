@@ -86,6 +86,7 @@ void Server::recvRequest_sendResponse(pollfd &sock) {
 
 	//RequestParser ResponseMaker >> Executor
 
+
 	//executor.receiveRequest(sock); //bool
 	//executor.executeMethod(); //bool
 	//executor.sendResponse(sock); //bool

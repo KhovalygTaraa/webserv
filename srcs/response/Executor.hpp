@@ -24,6 +24,7 @@
 # include <unistd.h>
 # include <fcntl.h>
 # include <fstream>
+# define MAX_HEADER_SIZE 8192
 
 class Executor {
 	public:
@@ -34,24 +35,19 @@ class Executor {
 
 	private:
 		int						_error;
-		size_t 					_body_size;
 		size_t					_max_body_size;
 		char					*_data;
 		Config					&_configParser;
 		RequestParser			&_requestParser;
 
-		// will remove
-		bool		collectHeader(const char *data);
-		bool		collectBody(const char *data);
-		bool 		collectRequest(const char *data, bool &next_step);
-		const char 	*strjoin(const char* s1, const char *s2) const;
 
 		size_t 					_content_length; // 0 if absent
-		bool 					_is_chunked;
-		std::list<std::string>	_header_fields;
 		size_t 					_header_size;
 		std::stringstream 		_body;
 
+		//add
+		bool 		splitHeader(std::vector<std::string> &main_strings, std::string &tmp);
+		int 		getError();
 		//core
 		bool 		methodDelete();
 		bool 		methodPost();
