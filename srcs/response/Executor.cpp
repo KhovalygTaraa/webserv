@@ -42,6 +42,7 @@ bool Executor::receiveRequest(pollfd &sock) {
 	std::string					tmp;
 	std::string 				header;
 
+	_sock = sock;
 	while(true) {
 		size = recv(sock.fd, &buffer, BUFFER_SIZE - 1, 0);
 		if (size > 0) {
@@ -61,7 +62,7 @@ bool Executor::receiveRequest(pollfd &sock) {
 
 					header = tmp.substr(0, res + 2);
 					splitHeader(splitted_header, header);
-//					_error = _requestParser.parseHeader(splitted_header);
+					_error = _requestParser.parseHeader(splitted_header);
 					tmp.erase(0, res + 4);
 					_body.write(tmp.data(), tmp.length());
 					break ;
@@ -83,18 +84,18 @@ bool Executor::receiveRequest(pollfd &sock) {
 //		}
 	}
 
-//	std::vector<std::string>::iterator it = splitted_header.begin();
-//	while (it != splitted_header.end())
-//	{
-//		std::cout << *it << "|" << std::endl;
-//		it++;
-//	}
+	std::vector<std::string>::iterator it = splitted_header.begin();
+	while (it != splitted_header.end())
+	{
+		std::cout << *it << "|" << std::endl;
+		it++;
+	}
+	std::cout << std::endl;
 	return (true);
 }
 
 bool Executor::executeMethod() {
 	bool res;
-
 
 	res = false;
 	if (_requestParser.getMethod() == "GET")
@@ -111,6 +112,28 @@ bool Executor::methodDelete() {
 }
 
 bool Executor::methodPost() {
+	int				size;
+	char			buffer[BUFFER_SIZE];
+	std::string		remainder;
+
+	selectLocation(_requestParser.getURI());
+	std::string boundary = _requestParser.getBoundary();
+
+	while (1)
+	{
+		size = recv(_sock.fd, &buffer, BUFFER_SIZE - 1, 0);
+		if (size > 0)
+		{
+
+		}
+		else if (size == 0)
+		{
+			break ;
+		}
+		std::ofstream new_file();
+	}
+
+
 	return (false);
 }
 
@@ -118,10 +141,11 @@ bool Executor::methodGet() {
 	return (false);
 }
 
-//Config::Host::Location &selectLocation(std::string uri)
-//{
-//
-//}
+Executor::Location Executor::selectLocation(std::string uri)
+{
+	Location location(_configParser.getHosts().front().getLocations().front());
+	return (location);
+}
 
 
 int Executor::getError() {
@@ -132,7 +156,6 @@ bool Executor::splitHeader(std::vector<std::string> &main_strings, std::string &
 	size_t 		res;
 	static int 	strings_count;
 	bool 		next_step;
-
 
 	while (res != npos) {
 		next_step = false;
@@ -180,19 +203,19 @@ bool Executor::sendResponse(pollfd &sock) {
 	int s;
 
 	_data = "HELLO";
-	fd = open("root/images/test.jpeg", O_RDONLY);
+	fd = open("root/index.html", O_RDONLY);
 //	fcntl(fd, F_SETFL, O_NONBLOCK);
 //	if (!fin.is_open())
 //		throw "file";
 	while ((s = read(fd, &c, 1)) > 0) {
 		content2.write(&c, 1);
 	}
-	content << "<title>Test C++ HTTP Server</title>\n"
-			<< "<h1>Test Server!</h1>\n"
-			<< "<p>This is body of the test page...</p>\n"
-			<< "<h2>Request headers</h2>\n"
-			<< "<pre>" << _data << "</pre>\n"
-			<< "<em><small>Test C++ Http Server</small></em>\n";
+//	content << "<title>Test C++ HTTP Server</title>\n"
+//			<< "<h1>Test Server!</h1>\n"
+//			<< "<p>This is body of the test page...</p>\n"
+//			<< "<h2>Request headers</h2>\n"
+//			<< "<pre>" << _data << "</pre>\n"
+//			<< "<em><small>Test C++ Http Server</small></em>\n";
 //			<< content2 << "\n";
 //	content << content2;
 
@@ -202,11 +225,11 @@ bool Executor::sendResponse(pollfd &sock) {
 			 << "Version: HTTP/1.1\r\n"
 			 << "Content-Type: text/html\r\n"
 			 << "Connection: keep-alive\r\n"
-			 << "Content-Length: " << content.str().length()
+			 << "Content-Length: " << content2.str().length()
 			 //			 << "Transfer-Encoding: chunked"
 			 << "\r\n\r\n"
 			 //			 << "5059\r\n"
-			 << content.str();
+			 << content2.str();
 //			 << "0" << "\r\n\r\n";
 	response2 = response.str();
 	if (send(sock.fd, response2.c_str(), response2.length(), 0) < 0)

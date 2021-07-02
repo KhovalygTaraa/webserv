@@ -42,9 +42,12 @@ class RequestParser
 		RequestParser &operator=(const RequestParser &r);
 		~RequestParser();
 
-		bool 		parseHeader();
+		bool 		parseHeader(std::vector<std::string> &header);
 		std::string getMethod(void) const;
+		std::string getURI(void) const;
 		int 		getError(void) const;
+		std::string getBoundary(void) const;
+
 };
 
 #endif

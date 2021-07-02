@@ -23,12 +23,34 @@ RequestParser::~RequestParser() {
 
 }
 
-bool	RequestParser::parseHeader() {
+bool	RequestParser::parseHeader(std::vector<std::string> &header) {
+	int a;
+
+	if (header.front().find("GET"))
+		_method = "GET";
+	else if (header.front().find("POST"))
+		_method = "POST";
+	for(int i = 0; header[i] != header.back(); i++)
+	{
+		a = header[i].find("boundary");
+		if (a)
+		{
+			header[i].substr(a + 8, header[i].length() - (a + 8));
+		}
+	}
 	return (true);
 }
 
+std::string		RequestParser::getBoundary() const {
+	return (_boundary);
+}
+
 std::string		RequestParser::getMethod() const {
-	return ("GET");
+	return (_method);
+}
+
+std::string 	RequestParser::getURI() const {
+	return ("/");
 }
 
 RequestParser&	RequestParser::operator=(const RequestParser &r) {

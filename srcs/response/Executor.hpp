@@ -34,7 +34,10 @@ class Executor {
 		bool sendResponse(pollfd &sock); // send response
 
 	private:
+		typedef Config::Host::Location Location;
+
 		int						_error;
+		pollfd					_sock;
 		size_t					_max_body_size;
 		char					*_data;
 		Config					&_configParser;
@@ -47,6 +50,7 @@ class Executor {
 
 		//add
 		bool 		splitHeader(std::vector<std::string> &main_strings, std::string &tmp);
+		Location	selectLocation(std::string uri);
 		int 		getError();
 		//core
 		bool 		methodDelete();
