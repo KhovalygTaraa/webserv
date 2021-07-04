@@ -92,7 +92,7 @@ void Server::recvRequest_sendResponse(pollfd &sock) {
 	//executor.sendResponse(sock); //bool
 
 	isSuccess = executor.receiveRequest(sock);
-	executor.executeMethod();
+//	executor.executeMethod();
 	if (!isSuccess) {
 		close(sock.fd);
 		sock.fd = VOID_POLLFD;

@@ -39,16 +39,17 @@ bool Executor::receiveRequest(pollfd &sock) {
 	int 						size;
 	int 						res;
 	std::vector<std::string>	splitted_header;
-	std::string					tmp;
+	std::string 				tmp;
 	std::string 				header;
 
-	_sock = sock;
+	_sock = &sock;
 	while(true) {
 		size = recv(sock.fd, &buffer, BUFFER_SIZE - 1, 0);
 		if (size > 0) {
 			buffer[size] = '\0';
 			tmp.append(buffer);
 			res = tmp.find("\r\n\r\n");
+
 			if (res == npos) {
 				_header_size = _header_size + size;
 				if (_header_size >= MAX_HEADER_SIZE)
@@ -59,12 +60,11 @@ bool Executor::receiveRequest(pollfd &sock) {
 				if (res >= MAX_HEADER_SIZE)
 					_error = 413;
 				else {
-
-					header = tmp.substr(0, res + 2);
+					header.append(tmp.substr(0, res));
 					splitHeader(splitted_header, header);
 					_error = _requestParser.parseHeader(splitted_header);
 					tmp.erase(0, res + 4);
-					_body.write(tmp.data(), tmp.length());
+					_body.write(tmp.c_str(), tmp.length());
 					break ;
 				}
 			}
@@ -112,33 +112,97 @@ bool Executor::methodDelete() {
 }
 
 bool Executor::methodPost() {
-	int				size;
-	char			buffer[BUFFER_SIZE];
-	std::string		remainder;
+	size_t	content_length;
+	bool	is_multipart;
 
-	selectLocation(_requestParser.getURI());
-	std::string boundary = _requestParser.getBoundary();
-
-	while (1)
+	is_multipart = false;
+	content_length = _requestParser.getContentLength();
+	if (_requestParser.getContentType() == "multipart/form-data")
+		is_multipart = true;
+	if (!content_length)
 	{
-		size = recv(_sock.fd, &buffer, BUFFER_SIZE - 1, 0);
-		if (size > 0)
-		{
-
-		}
-		else if (size == 0)
-		{
-			break ;
-		}
-		std::ofstream new_file();
+		if (is_multipart)
+			_error = readChunkedMultipartData();
+		else
+			_error = readChunkedData();
 	}
+	else
+	{
+//		if (content_length > selectLocation(_requestParser.getURI()).)
+		if (is_multipart)
+			_error = readFixMultipartData();
+		else
+			_error = readFixData(content_length);
+	}
+	// 1) обычное чтение
+	// 2) обычное чтение + chunked
+	// 3) чтение multipart
+	// 4) чтение multipart + chunked
 
-
-	return (false);
+	if (_error)
+		return (false);
+	return (true);
 }
 
 bool Executor::methodGet() {
 	return (false);
+}
+
+int	Executor::readChunkedData() {
+	return (0);
+}
+
+int Executor::readFixData(size_t content_length) {
+	char	buffer[BUFFER_SIZE];
+	size_t 	size;
+
+
+	while (1) {
+		size = recv(_sock->fd, &buffer, BUFFER_SIZE, 0);
+		if (size > 0)
+		{
+			_max_body_size += size;
+			if (_max_body_size > content_length)
+				return (413);
+			break ;
+		}
+		else if (!size)
+			return (499);
+		else
+		{
+			return (400);
+		}
+	}
+	return (0);
+}
+
+int Executor::readChunkedMultipartData() {
+	char	buffer[BUFFER_SIZE];
+	size_t 	size;
+
+
+	while (1) {
+		size = recv(_sock->fd, &buffer, BUFFER_SIZE, 0);
+		if (size > 0)
+		{
+
+			_max_body_size += size;
+//			if (_max_body_size > )
+//				return (413);
+			break ;
+		}
+		else if (!size)
+			return (499);
+		else
+		{
+			return (400);
+		}
+	}
+	return (0);
+}
+
+int Executor::readFixMultipartData() {
+	return (0);
 }
 
 Executor::Location Executor::selectLocation(std::string uri)
@@ -146,7 +210,6 @@ Executor::Location Executor::selectLocation(std::string uri)
 	Location location(_configParser.getHosts().front().getLocations().front());
 	return (location);
 }
-
 
 int Executor::getError() {
 	return (_error);
@@ -176,7 +239,7 @@ bool Executor::splitHeader(std::vector<std::string> &main_strings, std::string &
 				tmp.erase(0, 1);
 			next_step = false;
 		}
-		//// нашли, добавляем в вектор "main_strings" и удаляем из строки "tmp"
+		//// нашли CRLF, добавляем в вектор "main_strings" и удаляем из строки "tmp"
 		if (next_step) {
 			main_strings.push_back(tmp.substr(0, res));
 			if (tmp[res] == '\r' && tmp[res + 1] == '\n')
@@ -236,3 +299,4 @@ bool Executor::sendResponse(pollfd &sock) {
 		throw "over";
 	return (true);
 }
+

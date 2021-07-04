@@ -35,7 +35,7 @@ bool	RequestParser::parseHeader(std::vector<std::string> &header) {
 		a = header[i].find("boundary");
 		if (a)
 		{
-			header[i].substr(a + 8, header[i].length() - (a + 8));
+			_boundary = header[i].substr(a + 8, header[i].length() - (a + 8));
 		}
 	}
 	return (true);
@@ -51,6 +51,18 @@ std::string		RequestParser::getMethod() const {
 
 std::string 	RequestParser::getURI() const {
 	return ("/");
+}
+
+std::string 	RequestParser::getContentType() const {
+	return ("multipart/form-data");
+}
+
+int 			RequestParser::getError() const {
+	return (400);
+}
+
+size_t			RequestParser::getContentLength() const {
+	return (_content_length);
 }
 
 RequestParser&	RequestParser::operator=(const RequestParser &r) {
