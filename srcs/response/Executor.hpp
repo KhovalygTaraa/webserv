@@ -37,22 +37,26 @@ class Executor {
 		typedef Config::Host::Location Location;
 
 		int						_error;
-		pollfd					*_sock;
+		pollfd					_sock;
 		size_t					_max_body_size;
 		char					*_data;
 		Config					&_configParser;
 		RequestParser			&_requestParser;
 		size_t 					_header_size;
 		std::stringstream 		_body;
+		int 					_post;
+		Location 				*_location;
 
 		//add
 		bool 		splitHeader(std::vector<std::string> &main_strings, std::string &tmp);
-		Location	selectLocation(std::string uri);
+		int			selectLocation(std::string uri);
 		int 		getError();
-		int 		readChunkedData();
-		int 		readChunkedMultipartData();
-		int 		readFixMultipartData();
-		int 		readFixData(size_t	content_length);
+		int 		readChunkedBody();
+		int 		readFixBody(size_t	content_length);
+		int 		selectFunction(std::string content_type);
+		int			postMultiPartFD();
+		int 		postApplicationXWFU();
+		int 		writeToFile(std::string filename, char *data, size_t size);
 		//core
 		bool 		methodDelete();
 		bool 		methodPost();

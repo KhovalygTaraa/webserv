@@ -37,12 +37,12 @@ _configParser(configParser),  _requestParser(requestParser) {
 bool Executor::receiveRequest(pollfd &sock) {
 	char						buffer[BUFFER_SIZE];
 	int 						size;
-	int 						res;
+	size_t 						res;
 	std::vector<std::string>	splitted_header;
 	std::string 				tmp;
 	std::string 				header;
 
-	_sock = &sock;
+	_sock = sock;
 	while(true) {
 		size = recv(sock.fd, &buffer, BUFFER_SIZE - 1, 0);
 		if (size > 0) {
@@ -65,6 +65,7 @@ bool Executor::receiveRequest(pollfd &sock) {
 					_error = _requestParser.parseHeader(splitted_header);
 					tmp.erase(0, res + 4);
 					_body.write(tmp.c_str(), tmp.length());
+					_max_body_size = tmp.length();
 					break ;
 				}
 			}
@@ -84,25 +85,28 @@ bool Executor::receiveRequest(pollfd &sock) {
 //		}
 	}
 
-	std::vector<std::string>::iterator it = splitted_header.begin();
-	while (it != splitted_header.end())
-	{
-		std::cout << *it << "|" << std::endl;
-		it++;
-	}
-	std::cout << std::endl;
+//	std::vector<std::string>::iterator it = splitted_header.begin();
+//	while (it != splitted_header.end())
+//	{
+//		std::cout << *it << "|" << std::endl;
+//		it++;
+//	}
+//	std::cout << _requestParser.getBoundary() << "bbb" << std::endl;
+//	std::cout << "---------------" <<std::endl;
 	return (true);
 }
 
 bool Executor::executeMethod() {
 	bool res;
-
+	std::string method;
+	method = _requestParser.getMethod();
+	selectLocation(_requestParser.getURI());
 	res = false;
-	if (_requestParser.getMethod() == "GET")
+	if (method == "GET")
 		res = methodGet();
-	else if (_requestParser.getMethod() == "POST")
+	else if (method == "POST")
 		res = methodPost();
-	else if (_requestParser.getMethod() == "DELETE")
+	else if (method == "DELETE")
 		res = methodDelete();
 	return (res);
 }
@@ -112,103 +116,150 @@ bool Executor::methodDelete() {
 }
 
 bool Executor::methodPost() {
-	size_t	content_length;
-	bool	is_multipart;
+	size_t		content_length;
+	std::string	content_type;
 
-	is_multipart = false;
 	content_length = _requestParser.getContentLength();
-	if (_requestParser.getContentType() == "multipart/form-data")
-		is_multipart = true;
+	content_type = _requestParser.getContentType();
+	//	if (content_length > selectLocation(_requestParser.getURI()).getBodySize() -> 413  error
 	if (!content_length)
 	{
-		if (is_multipart)
-			_error = readChunkedMultipartData();
-		else
-			_error = readChunkedData();
+			_error = readChunkedBody();
 	}
 	else
 	{
-//		if (content_length > selectLocation(_requestParser.getURI()).)
-		if (is_multipart)
-			_error = readFixMultipartData();
-		else
-			_error = readFixData(content_length);
+			_error = readFixBody(content_length);
 	}
-	// 1) обычное чтение
-	// 2) обычное чтение + chunked
-	// 3) чтение multipart
-	// 4) чтение multipart + chunked
-
-	if (_error)
+	selectFunction(content_type);
+	if (_error) {
 		return (false);
+	}
 	return (true);
 }
 
 bool Executor::methodGet() {
+//	getLocation
+//	_configParser.
+
 	return (false);
 }
 
-int	Executor::readChunkedData() {
+int	Executor::readChunkedBody() {
+	char		buffer[BUFFER_SIZE];
+	size_t 		size;
+
+	while (1) {
+		size = recv(_sock.fd, &buffer, BUFFER_SIZE, 0);
+		if (size > 0)
+		{
+		}
+		else if (!size)
+			return (499);
+		else
+		{
+			break ;
+//			return (400);
+		}
+	}
 	return (0);
 }
 
-int Executor::readFixData(size_t content_length) {
-	char	buffer[BUFFER_SIZE];
-	size_t 	size;
+int Executor::readFixBody(size_t content_length) {
+	char				buffer[BUFFER_SIZE];
+	ssize_t				size;
+//	std::stringstream	body;
 
-
-	while (1) {
-		size = recv(_sock->fd, &buffer, BUFFER_SIZE, 0);
+	while (true) {
+		size = recv(_sock.fd, &buffer, BUFFER_SIZE, 0);
+		std::cout << size << std::endl;
+		if (size < 0)
+			std::cerr << std::strerror(errno) << "zzzz" << std::endl;
 		if (size > 0)
 		{
+//			buffer[size] = '\0';
+			_body.write(buffer, size);
 			_max_body_size += size;
 			if (_max_body_size > content_length)
 				return (413);
-			break ;
+			else if (_max_body_size == content_length)
+				return (1);
 		}
 		else if (!size)
 			return (499);
 		else
 		{
-			return (400);
+//			break ;
+//			return (400);
 		}
 	}
+//	(this->*postType)(buffer, size);
 	return (0);
 }
 
-int Executor::readChunkedMultipartData() {
-	char	buffer[BUFFER_SIZE];
-	size_t 	size;
+
+int Executor::selectFunction(std::string content_type) {
+	int res;
+
+	res = 0;
+	if (content_type == "application/x-www-form-urlencoded")
+		res = postApplicationXWFU();
+	else if (content_type == "multipart/form-data")
+		res = postMultiPartFD();
+	return (res);
+}
 
 
-	while (1) {
-		size = recv(_sock->fd, &buffer, BUFFER_SIZE, 0);
-		if (size > 0)
-		{
-
-			_max_body_size += size;
-//			if (_max_body_size > )
-//				return (413);
-			break ;
-		}
-		else if (!size)
-			return (499);
-		else
-		{
-			return (400);
-		}
-	}
+int Executor::postMultiPartFD() {
 	return (0);
 }
 
-int Executor::readFixMultipartData() {
+int Executor::postApplicationXWFU() {
+	return(0);
+}
+
+int Executor::writeToFile(std::string filename, char *data, size_t size) {
+	std::ofstream file;
+
+	file.open(filename.c_str(),std::fstream::out | std::fstream::app | std::fstream::binary);
+	file.write(data, size);
 	return (0);
 }
 
-Executor::Location Executor::selectLocation(std::string uri)
+int Executor::selectLocation(std::string uri)
 {
-	Location location(_configParser.getHosts().front().getLocations().front());
-	return (location);
+	Location *location;
+	std::vector<Config::Host> host = _configParser.getHosts();
+	//Location location(_configParser.getHosts().front().getLocations().front());
+	std::pair<std::string, int> requestedHost = _requestParser.getHost();
+	std::vector<Config::Host>::iterator it;
+	std::vector<std::string>::iterator it2;
+	std::vector<Location>::iterator it3;
+	std::vector<Location> tmp2;
+	std::vector<std::string> tmp;
+
+	it = host.begin();
+	while (it != host.end())			//перебираем сервера из конфига
+	{
+		tmp = it->getServerNames();
+		it2 = tmp.begin();
+		while (it2 != tmp.end())		//перебираем server_names серверов из конфига
+		{
+			if (requestedHost.first == *it2){
+				std::cerr << "CATCH U!" << std::endl;	//перебираем locations найденного сервера
+				tmp2 = it->getLocations();
+				it3 = tmp2.begin();
+				while (it3 != tmp2.end())
+				{
+					++it3;
+				}
+			}
+			std::cout << *it2 << std::endl;
+			++it2;
+		}
+		++it;
+	}
+	_location = location;
+	return (0);
 }
 
 int Executor::getError() {

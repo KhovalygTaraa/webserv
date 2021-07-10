@@ -50,7 +50,17 @@ class RequestParser
 		int 		getError(void) const;
 		size_t 		getContentLength() const;
 		std::string getBoundary(void) const;
+		std::pair<std::string, int> getHost(void) const; // host and port из request
 
 };
+
+//struct Request {
+//	std::map<std::string, std::string> headers;
+//	int parseHeader(std::vector<std::string>);
+//	std::string find(std::string key);
+//};
+
+//typedef headers.find tt
+/// tt("key") == "value";  tt("content_type")
 
 #endif
